@@ -1,0 +1,63 @@
+{
+  "description": "Create mjonuschat/baseimage Docker image",
+  "variables": {
+    "docker_username": "{{env `DOCKER_USERNAME`}}",
+    "docker_password": "{{env `DOCKER_PASSWORD`}}"
+  },
+  "sensitive-variables": ["docker_password"],
+  "builders": [
+    {
+      "type": "docker",
+      "image": "ubuntu:18.04",
+      "commit": true,
+      "changes": [
+        "CMD [\"/sbin/my_init\"]",
+        "ENV DEBIAN_FRONTEND teletype",
+        "ENV LANG en_US.UTF-8",
+        "ENV LANGUAGE en_US:en",
+        "ENV LC_ALL en_US.UTF-8"
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/prepare.sh"
+      ]
+    },
+    {
+      "type": "chef-solo",
+      "cookbook_paths": [
+        "cookbooks"
+      ],
+      "run_list": [
+        "container_baseimage"
+      ],
+      "prevent_sudo": true,
+      "skip_install": false
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/remove-chef.sh",
+        "scripts/cleanup.sh"
+      ]
+    }
+  ],
+  "post-processors": [
+    [
+      {
+        "type": "docker-tag",
+        "repository": "mjonuschat/baseimage",
+        "tag": "latest"
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_username": "{{user `docker_username`}}",
+        "login_password": "{{user `docker_password`}}"
+      }
+    ]
+  ]
+}
