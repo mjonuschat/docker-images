@@ -29,7 +29,7 @@
           },
           "ruby": {
             "enabled": true,
-            "versions": ["2.5.3"]
+            "versions": ["2.5.5"]
           }
         }
       },
