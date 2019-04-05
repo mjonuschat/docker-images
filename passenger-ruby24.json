@@ -1,6 +1,7 @@
 {
   "description": "Create mjonuschat/baseimage Docker image",
   "variables": {
+    "ruby_version": "2.4.6",
     "docker_username": "{{env `DOCKER_USERNAME`}}",
     "docker_password": "{{env `DOCKER_PASSWORD`}}"
   },
@@ -8,7 +9,7 @@
   "builders": [
     {
       "type": "docker",
-      "image": "mjonuschat/baseimage:latest",
+      "image": "mjonuschat/baseimage:bionic",
       "commit": true
     }
   ],
@@ -29,7 +30,7 @@
           },
           "ruby": {
             "enabled": true,
-            "versions": ["2.4.5"]
+            "versions": ["{{user `ruby_version`}}"]
           }
         }
       },
@@ -56,6 +57,32 @@
         "type": "docker-tag",
         "repository": "mjonuschat/passenger-ruby24",
         "tag": "latest"
+      },
+      {
+        "type": "docker-push",
+        "login": "true",
+        "login_username": "{{user `docker_username`}}",
+        "login_password": "{{user `docker_password`}}"
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "mjonuschat/passenger-ruby24",
+        "tag": "{{isotime \"20060102\"}}"
+      },
+      {
+        "type": "docker-push",
+        "login": "true",
+        "login_username": "{{user `docker_username`}}",
+        "login_password": "{{user `docker_password`}}"
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "mjonuschat/passenger-ruby24",
+        "tag": "{{user `ruby_version`}}"
       },
       {
         "type": "docker-push",

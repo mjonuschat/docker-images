@@ -8,7 +8,7 @@
   "builders": [
     {
       "type": "docker",
-      "image": "ubuntu:18.04",
+      "image": "ubuntu:bionic",
       "commit": true,
       "changes": [
         "CMD [\"/sbin/my_init\"]",
@@ -51,6 +51,32 @@
         "type": "docker-tag",
         "repository": "mjonuschat/baseimage",
         "tag": "latest"
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_username": "{{user `docker_username`}}",
+        "login_password": "{{user `docker_password`}}"
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "mjonuschat/baseimage",
+        "tag": "bionic"
+      },
+      {
+        "type": "docker-push",
+        "login": true,
+        "login_username": "{{user `docker_username`}}",
+        "login_password": "{{user `docker_password`}}"
+      }
+    ],
+    [
+      {
+        "type": "docker-tag",
+        "repository": "mjonuschat/baseimage",
+        "tag": "bionic-{{isotime \"20060102\"}}"
       },
       {
         "type": "docker-push",
