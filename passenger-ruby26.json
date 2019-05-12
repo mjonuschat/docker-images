@@ -1,7 +1,7 @@
 {
   "description": "Create mjonuschat/baseimage Docker image",
   "variables": {
-    "ruby_version": "2.6.2",
+    "ruby_version": "2.6.3",
     "docker_username": "{{env `DOCKER_USERNAME`}}",
     "docker_password": "{{env `DOCKER_PASSWORD`}}"
   },
