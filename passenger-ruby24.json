@@ -1,27 +1,32 @@
 {
-  "description": "Create mjonuschat/baseimage Docker image",
-  "variables": {
-    "ruby_version": "2.4.6",
-    "docker_username": "{{env `DOCKER_USERNAME`}}",
-    "docker_password": "{{env `DOCKER_PASSWORD`}}"
-  },
-  "sensitive-variables": ["docker_password"],
   "builders": [
     {
-      "type": "docker",
+      "commit": true,
       "image": "mjonuschat/baseimage:bionic",
-      "commit": true
+      "type": "docker"
     }
+  ],
+  "description": "Create mjonuschat/baseimage Docker image",
+  "post-processors": [
+    [
+      {
+        "repository": "mjonuschat/passenger-ruby24",
+        "tag": "latest",
+        "type": "docker-tag"
+      }
+    ]
   ],
   "provisioners": [
     {
-      "type": "shell",
       "scripts": [
         "scripts/prepare.sh"
-      ]
+      ],
+      "type": "shell"
     },
     {
-      "type": "chef-solo",
+      "cookbook_paths": [
+        "cookbooks"
+      ],
       "json": {
         "container_passenger": {
           "node": {
@@ -30,66 +35,29 @@
           },
           "ruby": {
             "enabled": true,
-            "versions": ["{{user `ruby_version`}}"]
+            "versions": [
+              "{{user `ruby_version`}}"
+            ]
           }
         }
       },
-      "cookbook_paths": [
-        "cookbooks"
-      ],
+      "prevent_sudo": true,
       "run_list": [
         "container_passenger"
       ],
-      "prevent_sudo": true,
-      "skip_install": false
+      "skip_install": false,
+      "type": "chef-solo"
     },
     {
-      "type": "shell",
       "scripts": [
         "scripts/remove-chef.sh",
         "scripts/cleanup.sh"
-      ]
+      ],
+      "type": "shell"
     }
   ],
-  "post-processors": [
-    [
-      {
-        "type": "docker-tag",
-        "repository": "mjonuschat/passenger-ruby24",
-        "tag": "latest"
-      },
-      {
-        "type": "docker-push",
-        "login": "true",
-        "login_username": "{{user `docker_username`}}",
-        "login_password": "{{user `docker_password`}}"
-      }
-    ],
-    [
-      {
-        "type": "docker-tag",
-        "repository": "mjonuschat/passenger-ruby24",
-        "tag": "{{isotime \"20060102\"}}"
-      },
-      {
-        "type": "docker-push",
-        "login": "true",
-        "login_username": "{{user `docker_username`}}",
-        "login_password": "{{user `docker_password`}}"
-      }
-    ],
-    [
-      {
-        "type": "docker-tag",
-        "repository": "mjonuschat/passenger-ruby24",
-        "tag": "{{user `ruby_version`}}"
-      },
-      {
-        "type": "docker-push",
-        "login": "true",
-        "login_username": "{{user `docker_username`}}",
-        "login_password": "{{user `docker_password`}}"
-      }
-    ]
-  ]
+  "variables": {
+    "ruby_version": "2.4.6"
+  }
 }
+

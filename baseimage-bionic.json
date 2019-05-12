@@ -1,89 +1,60 @@
 {
-  "description": "Create mjonuschat/baseimage Docker image",
-  "variables": {
-    "docker_username": "{{env `DOCKER_USERNAME`}}",
-    "docker_password": "{{env `DOCKER_PASSWORD`}}"
-  },
-  "sensitive-variables": ["docker_password"],
   "builders": [
     {
-      "type": "docker",
-      "image": "ubuntu:bionic",
-      "commit": true,
       "changes": [
         "CMD [\"/sbin/my_init\"]",
         "ENV DEBIAN_FRONTEND teletype",
         "ENV LANG en_US.UTF-8",
         "ENV LANGUAGE en_US:en",
         "ENV LC_ALL en_US.UTF-8"
-      ]
+      ],
+      "commit": true,
+      "image": "ubuntu:bionic",
+      "type": "docker"
     }
   ],
-  "provisioners": [
-    {
-      "type": "shell",
-      "scripts": [
-        "scripts/prepare.sh"
-      ]
-    },
-    {
-      "type": "chef-solo",
-      "cookbook_paths": [
-        "cookbooks"
-      ],
-      "run_list": [
-        "container_baseimage"
-      ],
-      "prevent_sudo": true,
-      "skip_install": false
-    },
-    {
-      "type": "shell",
-      "scripts": [
-        "scripts/remove-chef.sh",
-        "scripts/cleanup.sh"
-      ]
-    }
-  ],
+  "description": "Create mjonuschat/baseimage Docker image",
   "post-processors": [
     [
       {
-        "type": "docker-tag",
         "repository": "mjonuschat/baseimage",
-        "tag": "latest"
-      },
-      {
-        "type": "docker-push",
-        "login": true,
-        "login_username": "{{user `docker_username`}}",
-        "login_password": "{{user `docker_password`}}"
+        "tag": "latest",
+        "type": "docker-tag"
       }
     ],
     [
       {
-        "type": "docker-tag",
         "repository": "mjonuschat/baseimage",
-        "tag": "bionic"
-      },
-      {
-        "type": "docker-push",
-        "login": true,
-        "login_username": "{{user `docker_username`}}",
-        "login_password": "{{user `docker_password`}}"
-      }
-    ],
-    [
-      {
-        "type": "docker-tag",
-        "repository": "mjonuschat/baseimage",
-        "tag": "bionic-{{isotime \"20060102\"}}"
-      },
-      {
-        "type": "docker-push",
-        "login": true,
-        "login_username": "{{user `docker_username`}}",
-        "login_password": "{{user `docker_password`}}"
+        "tag": "bionic",
+        "type": "docker-tag"
       }
     ]
+  ],
+  "provisioners": [
+    {
+      "scripts": [
+        "scripts/prepare.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "cookbook_paths": [
+        "cookbooks"
+      ],
+      "prevent_sudo": true,
+      "run_list": [
+        "container_baseimage"
+      ],
+      "skip_install": false,
+      "type": "chef-solo"
+    },
+    {
+      "scripts": [
+        "scripts/remove-chef.sh",
+        "scripts/cleanup.sh"
+      ],
+      "type": "shell"
+    }
   ]
 }
+
