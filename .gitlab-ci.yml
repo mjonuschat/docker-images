@@ -57,21 +57,6 @@ passenger:ruby26:
   dependencies:
     - baseimage:bionic
 
-publish:latest:
-  stage: publish
-  tags:
-    - packer
-    - docker-host
-  before_script:
-    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-  script:
-    - docker push mjonuschat/baseimage:latest
-    - docker push mjonuschat/passenger-ruby24:latest
-    - docker push mjonuschat/passenger-ruby25:latest
-    - docker push mjonuschat/passenger-ruby26:latest
-  after_script:
-    - docker logout
-
 publish:versioned:
   stage: publish
   only:
