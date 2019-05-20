@@ -41,6 +41,7 @@
       "cookbook_paths": [
         "cookbooks"
       ],
+      "execute_command": "{{if .Sudo}}sudo {{end}}chef-solo --chef-license accept-silent --no-color -c {{.ConfigPath}} -j {{.JsonPath}}",
       "prevent_sudo": true,
       "run_list": [
         "container_baseimage"
