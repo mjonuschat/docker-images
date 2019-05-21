@@ -68,7 +68,7 @@ publish:versioned:
     - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   script:
     - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:bionic
-    - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:$(date +%Y%m%d)
+    - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:bionic-$(date +%Y%m%d)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby24:$(jq -r .variables.ruby_version passenger-ruby24.json)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby24:$(date +%Y%m%d)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
@@ -77,7 +77,7 @@ publish:versioned:
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby26:$(date +%Y%m%d)
     - docker push mjonuschat/baseimage:latest
     - docker push mjonuschat/baseimage:bionic
-    - docker push mjonuschat/baseimage:$(date +%Y%m%d)
+    - docker push mjonuschat/baseimage:bionic-$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby24:latest
     - docker push mjonuschat/passenger-ruby24:$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
