@@ -2,7 +2,7 @@
   "builders": [
     {
       "commit": true,
-      "image": "mjonuschat/baseimage:latest",
+      "image": "mjonuschat/baseimage:bionic",
       "type": "docker"
     }
   ],
