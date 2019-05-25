@@ -87,16 +87,19 @@ passenger:publish:
   script:
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby24:$(jq -r .variables.ruby_version passenger-ruby24.json)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby24:$(date +%Y%m%d)
-    - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
-    - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby25:$(date +%Y%m%d)
-    - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version passenger-ruby26.json)
-    - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby26:$(date +%Y%m%d)
+    - docker tag mjonuschat/passenger-ruby25:latest mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
+    - docker tag mjonuschat/passenger-ruby25:latest mjonuschat/passenger-ruby25:$(date +%Y%m%d)
+    - docker tag mjonuschat/passenger-ruby26:latest mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version passenger-ruby26.json)
+    - docker tag mjonuschat/passenger-ruby26:latest mjonuschat/passenger-ruby26:$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby24:latest
     - docker push mjonuschat/passenger-ruby24:$(date +%Y%m%d)
+    - docker push mjonuschat/passenger-ruby24:$(jq -r .variables.ruby_version passenger-ruby24.json)
+    - docker push mjonuschat/passenger-ruby25:latest
+    - docker push mjonuschat/passenger-ruby25:$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
-    - docker push mjonuschat/passenger-ruby24:latest
-    - docker push mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version passenger-ruby26.json)
+    - docker push mjonuschat/passenger-ruby26:latest
     - docker push mjonuschat/passenger-ruby26:$(date +%Y%m%d)
+    - docker push mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version passenger-ruby26.json)
   after_script:
     - docker rmi -f $(docker images | awk '/mjonuschat\// { print $1 ":" $2 }') || true
     - docker logout
