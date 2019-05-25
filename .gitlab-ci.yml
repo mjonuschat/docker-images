@@ -27,6 +27,24 @@ baseimage:bionic:
   script:
     - packer build $CI_PROJECT_DIR/baseimage-bionic.json
 
+baseimage:publish:
+  stage: baseimages
+  only:
+    - schedules
+  tags:
+    - packer
+    - docker-host
+  before_script:
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  script:
+    - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:bionic
+    - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:bionic-$(date +%Y%m%d)
+    - docker push mjonuschat/baseimage:latest
+    - docker push mjonuschat/baseimage:bionic
+    - docker push mjonuschat/baseimage:bionic-$(date +%Y%m%d)
+  after_script:
+    - docker logout
+
 passenger:ruby24:
   stage: images
   tags:
@@ -57,7 +75,7 @@ passenger:ruby26:
   dependencies:
     - baseimage:bionic
 
-publish:versioned:
+passenger:publish:
   stage: publish
   only:
     - schedules
@@ -67,17 +85,12 @@ publish:versioned:
   before_script:
     - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
   script:
-    - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:bionic
-    - docker tag mjonuschat/baseimage:latest mjonuschat/baseimage:bionic-$(date +%Y%m%d)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby24:$(jq -r .variables.ruby_version passenger-ruby24.json)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby24:$(date +%Y%m%d)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby25:$(date +%Y%m%d)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version passenger-ruby26.json)
     - docker tag mjonuschat/passenger-ruby24:latest mjonuschat/passenger-ruby26:$(date +%Y%m%d)
-    - docker push mjonuschat/baseimage:latest
-    - docker push mjonuschat/baseimage:bionic
-    - docker push mjonuschat/baseimage:bionic-$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby24:latest
     - docker push mjonuschat/passenger-ruby24:$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby25:$(jq -r .variables.ruby_version passenger-ruby25.json)
@@ -87,3 +100,4 @@ publish:versioned:
   after_script:
     - docker rmi -f $(docker images | awk '/mjonuschat\// { print $1 ":" $2 }') || true
     - docker logout
+    - docker system prune -f
