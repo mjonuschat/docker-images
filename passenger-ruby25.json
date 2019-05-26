@@ -1,6 +1,9 @@
 {
   "builders": [
     {
+      "changes": [
+        "ENTRYPOINT [\"/sbin/my_init\"]"
+      ],
       "commit": true,
       "image": "mjonuschat/baseimage:bionic",
       "type": "docker"
@@ -61,4 +64,3 @@
     "ruby_version": "2.5.5"
   }
 }
-
