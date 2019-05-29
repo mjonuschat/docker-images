@@ -8,8 +8,10 @@ before_script:
 stages:
   - validate
   - baseimages
+  - passenger
   - images
   - publish
+  - cleanup
 
 validate:
   stage: validate
@@ -46,7 +48,7 @@ baseimage:publish:
     - docker logout
 
 passenger:ruby24:
-  stage: images
+  stage: passenger
   tags:
     - packer
     - docker-host
@@ -56,7 +58,7 @@ passenger:ruby24:
     - baseimage:bionic
 
 passenger:ruby25:
-  stage: images
+  stage: passenger
   tags:
     - packer
     - docker-host
@@ -66,7 +68,7 @@ passenger:ruby25:
     - baseimage:bionic
 
 passenger:ruby26:
-  stage: images
+  stage: passenger
   tags:
     - packer
     - docker-host
@@ -74,6 +76,16 @@ passenger:ruby26:
     - packer build $CI_PROJECT_DIR/passenger-ruby26.json
   dependencies:
     - baseimage:bionic
+
+rails:ruby26:
+  stage: images
+  tags:
+    - packer
+    - docker-host
+  script:
+    - packer build $CI_PROJECT_DIR/rails-ruby26.json
+  dependencies:
+    - passenger:ruby26
 
 passenger:publish:
   stage: publish
@@ -101,6 +113,33 @@ passenger:publish:
     - docker push mjonuschat/passenger-ruby26:$(date +%Y%m%d)
     - docker push mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version passenger-ruby26.json)
   after_script:
-    - docker rmi -f $(docker images | awk '/mjonuschat\// { print $1 ":" $2 }') || true
     - docker logout
+
+images:publish:
+  stage: publish
+  only:
+    - schedules
+  tags:
+    - packer
+    - docker-host
+  before_script:
+    - docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+  script:
+    - docker tag mjonuschat/rails-ruby26:latest mjonuschat/passenger-ruby26:$(jq -r .variables.ruby_version rails-ruby26.json)
+    - docker tag mjonuschat/rails-ruby26:latest mjonuschat/passenger-ruby26:$(date +%Y%m%d)
+    - docker push mjonuschat/rails-ruby26:latest
+    - docker push mjonuschat/rails-ruby26:$(date +%Y%m%d)
+    - docker push mjonuschat/rails-ruby26:$(jq -r .variables.ruby_version rails-ruby26.json)
+  after_script:
+    - docker logout
+
+cleanup:images:
+  stage: cleanup
+  only:
+    - schedules
+  tags:
+    - packer
+    - docker-host
+  script:
+    - docker rmi -f $(docker images | awk '/mjonuschat\// { print $1 ":" $2 }') || true
     - docker system prune -f
