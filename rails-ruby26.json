@@ -43,6 +43,6 @@
   ],
   "variables": {
     "passenger_image": "mjonuschat/passenger-ruby26",
-    "ruby_version": "2.6.3"
+    "ruby_version": "2.6.4"
   }
 }

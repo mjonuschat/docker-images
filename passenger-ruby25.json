@@ -61,6 +61,6 @@
     }
   ],
   "variables": {
-    "ruby_version": "2.5.5"
+    "ruby_version": "2.5.6"
   }
 }
