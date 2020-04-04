@@ -6,16 +6,17 @@
         "EXPOSE 80"
       ],
       "commit": true,
-      "image": "{{user `passenger_image`}}:{{user `ruby_version`}}",
-      "type": "docker"
+      "image": "mjonuschat/passenger-ruby@RUBY_VERSION_ID@:@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
+      "type": "docker",
+      "pull": false
     }
   ],
   "description": "Create mjonuschat/baseimage Docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/rails-ruby26",
-        "tag": "latest",
+        "repository": "mjonuschat/rails-ruby@RUBY_VERSION_ID@",
+        "tag": "@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
         "type": "docker-tag"
       }
     ]
@@ -42,7 +43,6 @@
     }
   ],
   "variables": {
-    "passenger_image": "mjonuschat/passenger-ruby26",
-    "ruby_version": "2.6.6"
+    "ruby_version": "@RUBY_VERSION_FULL@"
   }
 }

@@ -5,16 +5,17 @@
         "ENTRYPOINT [\"/sbin/my_init\"]"
       ],
       "commit": true,
-      "image": "mjonuschat/baseimage:bionic",
-      "type": "docker"
+      "image": "mjonuschat/baseimage:@UBUNTU_RELEASE_NAME@",
+      "type": "docker",
+      "pull": false
     }
   ],
   "description": "Create mjonuschat/baseimage Docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/passenger-ruby26",
-        "tag": "latest",
+        "repository": "mjonuschat/passenger-ruby@RUBY_VERSION_ID@",
+        "tag": "@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
         "type": "docker-tag"
       }
     ]
@@ -61,6 +62,6 @@
     }
   ],
   "variables": {
-    "ruby_version": "2.6.6"
+    "ruby_version": "@RUBY_VERSION_FULL@"
   }
 }
