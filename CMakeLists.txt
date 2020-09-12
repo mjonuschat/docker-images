@@ -7,7 +7,7 @@ set(CMAKE_SKIP_INSTALL_RULES True)
 string(TIMESTAMP BUILD_DATE "%Y%m%d")
 
 # Ubuntu versions for which to build images
-list(APPEND UBUNTU_VERSIONS bionic)
+list(APPEND UBUNTU_VERSIONS bionic focal)
 list(SORT UBUNTU_VERSIONS)
 list(GET UBUNTU_VERSIONS -1 LATEST_UBUNTU_VERSION)
 set(FOCAL_TAG "devel")
@@ -20,6 +20,9 @@ list(REVERSE RUBY_VERSIONS)
 
 # Build Rails images for the latest two Ruby versions
 list(SUBLIST RUBY_VERSIONS 0 2 RAILS_VERSIONS)
+
+# Other images
+list(APPEND APPLICATIONS borgmatic opensmtpd)
 
 add_custom_target("build-baseimages")
 add_custom_target("tag-baseimages" DEPENDS build-baseimages)
@@ -145,3 +148,35 @@ foreach(RELEASE IN LISTS UBUNTU_VERSIONS)
         endif()
     endforeach(RUBY_VERSION_FULL)
 endforeach(RELEASE)
+
+foreach(APPLICATION IN LISTS APPLICATIONS)
+    string(TOUPPER ${LATEST_UBUNTU_VERSION} RELEASE_U)
+    set(UBUNTU_RELEASE_NAME "${LATEST_UBUNTU_VERSION}")
+    set(UBUNTU_RELEASE_TAG "${${RELEASE_U}_TAG}")
+
+    configure_file(src/${APPLICATION}.json.in build/${APPLICATION}-${UBUNTU_RELEASE_NAME}.json)
+    add_custom_target(
+        build-${APPLICATION}-${UBUNTU_RELEASE_NAME}
+        COMMENT "Building ${APPLICATION} image on Ubuntu „${UBUNTU_RELEASE_NAME}”"
+        COMMAND packer build build/${APPLICATION}-${UBUNTU_RELEASE_NAME}.json  > build/${APPLICATION}-${UBUNTU_RELEASE_NAME}.log
+        DEPENDS build-baseimage-${UBUNTU_RELEASE_NAME}
+    )
+    add_custom_target(
+        tag-${APPLICATION}-${UBUNTU_RELEASE_NAME}
+        COMMENT "Tagging ${APPLICATION} image for on Ubuntu „${UBUNTU_RELEASE_NAME}”"
+        COMMAND docker tag mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_NAME} mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_NAME}-${BUILD_DATE} > /dev/null
+        COMMAND docker tag mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_NAME} mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_TAG} > /dev/null
+        DEPENDS build-${APPLICATION}-${UBUNTU_RELEASE_NAME}
+    )
+    add_custom_target(
+        push-${APPLICATION}-${UBUNTU_RELEASE_NAME}
+        COMMENT "Pushing ${APPLICATION} image on Ubuntu „${UBUNTU_RELEASE_NAME}”"
+        COMMAND docker push mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_NAME}-${BUILD_DATE} > /dev/null
+        COMMAND docker push mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_NAME} > /dev/null
+        COMMAND docker push mjonuschat/${APPLICATION}:${UBUNTU_RELEASE_TAG} > /dev/null
+        DEPENDS tag-${APPLICATION}-${UBUNTU_RELEASE_NAME}
+    )
+    add_dependencies("build" build-${APPLICATION}-${UBUNTU_RELEASE_NAME})
+    add_dependencies("tag" tag-${APPLICATION}-${UBUNTU_RELEASE_NAME})
+    add_dependencies("release" push-${APPLICATION}-${UBUNTU_RELEASE_NAME})
+endforeach(APPLICATION)

@@ -1,0 +1,64 @@
+{
+  "builders": [
+    {
+      "changes": [
+        "ENTRYPOINT [\"/sbin/my_init\"]"
+      ],
+      "commit": true,
+      "image": "mjonuschat/baseimage:@UBUNTU_RELEASE_NAME@",
+      "type": "docker",
+      "pull": false
+    }
+  ],
+  "description": "Create mjonuschat/opensmtpd docker image",
+  "post-processors": [
+    [
+      {
+        "repository": "mjonuschat/opensmtpd",
+        "tag": "@UBUNTU_RELEASE_NAME@",
+        "type": "docker-tag"
+      }
+    ]
+  ],
+  "provisioners": [
+    {
+      "scripts": [
+        "scripts/prepare.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "cookbook_paths": [
+        "cookbooks"
+      ],
+      "execute_command": "{{if .Sudo}}sudo {{end}}chef-solo --chef-license accept-silent --no-color -c {{.ConfigPath}} -j {{.JsonPath}}",
+      "json": {
+        "container_opensmtpd": {
+          "opensmtpd": {
+            "vdomains": [
+              "sharks-with-lasers.net"
+            ],
+            "vusers": {
+              "mail@sharks-with-lasers.net": "mjonuschat@gmail.com"
+            }
+          }
+        }
+      },
+      "prevent_sudo": true,
+      "run_list": [
+        "container_opensmtpd"
+      ],
+      "skip_install": false,
+      "type": "chef-solo"
+    },
+    {
+      "scripts": [
+        "scripts/remove-chef.sh",
+        "scripts/cleanup.sh"
+      ],
+      "type": "shell"
+    }
+  ],
+  "variables": {
+  }
+}
