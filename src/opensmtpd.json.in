@@ -35,6 +35,7 @@
       "json": {
         "container_opensmtpd": {
           "opensmtpd": {
+            "mailname": "mail-in.mojocode.de",
             "vdomains": [
               "sharks-with-lasers.net"
             ],
