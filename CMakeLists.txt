@@ -14,7 +14,7 @@ set(FOCAL_TAG "devel")
 set(BIONIC_TAG "latest")
 
 # Ruby versions for which to build images
-list(APPEND RUBY_VERSIONS 2.7.1 2.6.6 2.5.8 2.4.10)
+list(APPEND RUBY_VERSIONS 2.7.2 2.6.6 2.5.8 2.4.10)
 list(SORT RUBY_VERSIONS)
 list(REVERSE RUBY_VERSIONS)
 
