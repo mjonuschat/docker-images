@@ -31,7 +31,8 @@
       "cookbook_paths": [
         "cookbooks"
       ],
-      "execute_command": "{{if .Sudo}}sudo {{end}}chef-solo --chef-license accept-silent --no-color -c {{.ConfigPath}} -j {{.JsonPath}}",
+      "chef_license": "accept-silent",
+      "version": "16.6",
       "json": {
         "container_passenger": {
           "node": {
