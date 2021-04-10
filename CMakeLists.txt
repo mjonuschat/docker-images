@@ -10,8 +10,8 @@ string(TIMESTAMP BUILD_DATE "%Y%m%d")
 list(APPEND UBUNTU_VERSIONS bionic focal)
 list(SORT UBUNTU_VERSIONS)
 list(GET UBUNTU_VERSIONS -1 LATEST_UBUNTU_VERSION)
-set(FOCAL_TAG "devel")
-set(BIONIC_TAG "latest")
+set(FOCAL_TAG "latest")
+set(BIONIC_TAG "stable")
 
 # Ruby versions for which to build images
 list(APPEND RUBY_VERSIONS 2.7.2 2.6.6 2.5.8 2.4.10)
