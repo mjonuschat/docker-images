@@ -14,12 +14,12 @@ set(FOCAL_TAG "latest")
 set(BIONIC_TAG "stable")
 
 # Ruby versions for which to build images
-list(APPEND RUBY_VERSIONS 2.7.2 2.6.6 2.5.8 2.4.10)
+list(APPEND RUBY_VERSIONS 3.0.1 2.7.3 2.6.7 2.5.9)
 list(SORT RUBY_VERSIONS)
 list(REVERSE RUBY_VERSIONS)
 
-# Build Rails images for the latest two Ruby versions
-list(SUBLIST RUBY_VERSIONS 0 2 RAILS_VERSIONS)
+# Build Rails images for the latest three Ruby versions
+list(SUBLIST RUBY_VERSIONS 0 3 RAILS_VERSIONS)
 
 # Other images
 list(APPEND APPLICATIONS borgmatic opensmtpd)
