@@ -8,6 +8,7 @@
       "commit": true,
       "image": "mjonuschat/passenger-ruby@RUBY_VERSION_ID@:@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
       "type": "docker",
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"],
       "pull": false
     }
   ],

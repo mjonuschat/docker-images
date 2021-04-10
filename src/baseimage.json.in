@@ -10,7 +10,8 @@
       ],
       "commit": true,
       "image": "ubuntu:@UBUNTU_RELEASE_NAME@",
-      "type": "docker"
+      "type": "docker",
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"]
     }
   ],
   "description": "Create mjonuschat/baseimage Docker image",
