@@ -5,18 +5,18 @@
         "ENTRYPOINT [\"/sbin/my_init\"]"
       ],
       "commit": true,
-      "image": "mjonuschat/baseimage:@UBUNTU_RELEASE_NAME@",
+      "image": "{{ image }}",
       "type": "docker",
-      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"],
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{ '{{.Image}}' }}"],
       "pull": false
     }
   ],
-  "description": "Create mjonuschat/opensmtpd docker image",
+  "description": "Create mjonuschat/baseimage Docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/opensmtpd",
-        "tag": "@UBUNTU_RELEASE_NAME@",
+        "repository": "{{ repository }}",
+        "tag": "{{ tag }}",
         "type": "docker-tag"
       }
     ]
@@ -35,21 +35,22 @@
       "chef_license": "accept-silent",
       "version": "16.6",
       "json": {
-        "container_opensmtpd": {
-          "opensmtpd": {
-            "mailname": "mail-in.mojocode.de",
-            "vdomains": [
-              "sharks-with-lasers.net"
-            ],
-            "vusers": {
-              "mail@sharks-with-lasers.net": "mjonuschat@gmail.com"
-            }
+        "container_passenger": {
+          "node": {
+            "enabled": true,
+            "version": "node_12.x"
+          },
+          "ruby": {
+            "enabled": true,
+            "versions": [
+              "{{ '{{ user `ruby_version`}}' }}"
+            ]
           }
         }
       },
       "prevent_sudo": true,
       "run_list": [
-        "container_opensmtpd"
+        "container_passenger"
       ],
       "skip_install": false,
       "type": "chef-solo"
@@ -63,5 +64,6 @@
     }
   ],
   "variables": {
+    "ruby_version": "{{ ruby_version }}"
   }
 }

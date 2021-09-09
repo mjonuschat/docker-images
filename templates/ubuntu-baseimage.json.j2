@@ -2,21 +2,24 @@
   "builders": [
     {
       "changes": [
-        "ENTRYPOINT [\"/sbin/my_init\"]"
+        "ENTRYPOINT [\"/sbin/my_init\"]",
+        "ENV DEBIAN_FRONTEND teletype",
+        "ENV LANG en_US.UTF-8",
+        "ENV LANGUAGE en_US:en",
+        "ENV LC_ALL en_US.UTF-8"
       ],
       "commit": true,
-      "image": "mjonuschat/baseimage:@UBUNTU_RELEASE_NAME@",
+      "image": "{{  image }}",
       "type": "docker",
-      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"],
-      "pull": false
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{ '{{.Image}}' }}"]
     }
   ],
   "description": "Create mjonuschat/baseimage Docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/passenger-ruby@RUBY_VERSION_ID@",
-        "tag": "@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
+        "repository": "{{ repository }}",
+        "tag": "{{ tag }}",
         "type": "docker-tag"
       }
     ]
@@ -34,23 +37,9 @@
       ],
       "chef_license": "accept-silent",
       "version": "16.6",
-      "json": {
-        "container_passenger": {
-          "node": {
-            "enabled": true,
-            "version": "node_12.x"
-          },
-          "ruby": {
-            "enabled": true,
-            "versions": [
-              "{{user `ruby_version`}}"
-            ]
-          }
-        }
-      },
       "prevent_sudo": true,
       "run_list": [
-        "container_passenger"
+        "container_baseimage"
       ],
       "skip_install": false,
       "type": "chef-solo"
@@ -62,8 +51,6 @@
       ],
       "type": "shell"
     }
-  ],
-  "variables": {
-    "ruby_version": "@RUBY_VERSION_FULL@"
-  }
+  ]
 }
+

@@ -3,34 +3,26 @@
     {
       "changes": [
         "ENTRYPOINT [\"/sbin/my_init\"]",
-        "ENV DEBIAN_FRONTEND teletype",
-        "ENV LANG en_US.UTF-8",
-        "ENV LANGUAGE en_US:en",
-        "ENV LC_ALL en_US.UTF-8"
+        "EXPOSE 80"
       ],
       "commit": true,
-      "image": "ubuntu:@UBUNTU_RELEASE_NAME@",
+      "image": "{{ image }}",
       "type": "docker",
-      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"]
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{ '{{.Image}}' }}"],
+      "pull": false
     }
   ],
   "description": "Create mjonuschat/baseimage Docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/baseimage",
-        "tag": "@UBUNTU_RELEASE_NAME@",
+        "repository": "{{ repository }}",
+        "tag": "{{ tag }}",
         "type": "docker-tag"
       }
     ]
   ],
   "provisioners": [
-    {
-      "scripts": [
-        "scripts/prepare.sh"
-      ],
-      "type": "shell"
-    },
     {
       "cookbook_paths": [
         "cookbooks"
@@ -39,7 +31,7 @@
       "version": "16.6",
       "prevent_sudo": true,
       "run_list": [
-        "container_baseimage"
+        "container_rails"
       ],
       "skip_install": false,
       "type": "chef-solo"
@@ -51,6 +43,8 @@
       ],
       "type": "shell"
     }
-  ]
+  ],
+  "variables": {
+    "ruby_version": "{{ ruby_version }}"
+  }
 }
-

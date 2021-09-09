@@ -2,36 +2,43 @@
   "builders": [
     {
       "changes": [
-        "ENTRYPOINT [\"/sbin/my_init\"]",
-        "EXPOSE 80"
+        "ENTRYPOINT [\"\"]",
+        "CMD [\"\"]"
       ],
       "commit": true,
-      "image": "mjonuschat/passenger-ruby@RUBY_VERSION_ID@:@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
+      "image": "{{ image }}",
       "type": "docker",
-      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"],
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{ '{{.Image}}' }}"],
       "pull": false
     }
   ],
-  "description": "Create mjonuschat/baseimage Docker image",
+  "description": "Create mjonuschat/borgmatic docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/rails-ruby@RUBY_VERSION_ID@",
-        "tag": "@RUBY_VERSION_FULL@-@UBUNTU_RELEASE_NAME@",
+        "repository": "{{ repository }}",
+        "tags": "{{ tag }}",
         "type": "docker-tag"
       }
     ]
   ],
   "provisioners": [
     {
+      "scripts": [
+        "scripts/prepare.sh"
+      ],
+      "type": "shell"
+    },
+    {
       "cookbook_paths": [
         "cookbooks"
       ],
       "chef_license": "accept-silent",
       "version": "16.6",
+      "json": {},
       "prevent_sudo": true,
       "run_list": [
-        "container_rails"
+        "container_borgmatic"
       ],
       "skip_install": false,
       "type": "chef-solo"
@@ -45,6 +52,5 @@
     }
   ],
   "variables": {
-    "ruby_version": "@RUBY_VERSION_FULL@"
   }
 }

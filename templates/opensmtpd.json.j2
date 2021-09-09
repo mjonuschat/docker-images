@@ -2,22 +2,21 @@
   "builders": [
     {
       "changes": [
-        "ENTRYPOINT [\"\"]",
-        "CMD [\"\"]"
+        "ENTRYPOINT [\"/sbin/my_init\"]"
       ],
       "commit": true,
-      "image": "mjonuschat/baseimage:@UBUNTU_RELEASE_NAME@",
+      "image": "{{ image }}",
       "type": "docker",
-      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{.Image}}"],
+      "run_command": ["-d", "-i", "-t", "--network=host", "--", "{{ '{{.Image}}' }}"],
       "pull": false
     }
   ],
-  "description": "Create mjonuschat/borgmatic docker image",
+  "description": "Create mjonuschat/opensmtpd docker image",
   "post-processors": [
     [
       {
-        "repository": "mjonuschat/borgmatic",
-        "tags": "@UBUNTU_RELEASE_NAME@",
+        "repository": "{{ repository }}",
+        "tag": "{{ tag }}",
         "type": "docker-tag"
       }
     ]
@@ -38,6 +37,7 @@
       "json": {
         "container_opensmtpd": {
           "opensmtpd": {
+            "mailname": "mail-in.mojocode.de",
             "vdomains": [
               "sharks-with-lasers.net"
             ],
@@ -49,7 +49,7 @@
       },
       "prevent_sudo": true,
       "run_list": [
-        "container_borgmatic"
+        "container_opensmtpd"
       ],
       "skip_install": false,
       "type": "chef-solo"
