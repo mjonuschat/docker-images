@@ -6,9 +6,6 @@
 .vscode
 
 
-# Build artifacts
-build
-
 # CMake
 CMakeLists.txt.user
 CMakeCache.txt

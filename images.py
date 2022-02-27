@@ -1,0 +1,322 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import click
+import itertools
+import json
+import luigi
+import subprocess
+import typing as t
+from datetime import datetime
+from tempfile import NamedTemporaryFile
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from luigi.format import Nop
+from shutil import rmtree
+from pathlib import Path
+
+BUILD_DIR = Path("tmp").resolve(strict=False)
+UBUNTU_VERSIONS = {
+    "bionic": "stable",
+    "focal": "latest"
+}
+
+RUBY_VERSIONS = [
+    "2.5.9",
+    "2.6.9",
+    "2.7.5",
+    "3.0.3",
+    "3.1.1",
+]
+
+
+class PackerTask(luigi.Task):
+    MARKER = "txt"
+
+    repository = luigi.Parameter()
+    tag = luigi.Parameter()
+    image = luigi.Parameter()
+    config = luigi.Parameter()
+    variables = luigi.DictParameter()
+
+    @property
+    def name(self):
+        user, image, *_ = str(self.repository).split("/")
+        return f"{user}-{image}-{self.tag}"
+
+    def output(self):
+        return luigi.LocalTarget(f"{BUILD_DIR}/{self.name}.{self.MARKER}")
+
+
+class BuildImage(PackerTask):
+    MARKER = "build"
+
+    @property
+    def context(self) -> t.Dict[str, str]:
+        default_vars = {
+            "image": str(self.image),
+            "repository": str(self.repository),
+            "tag": str(self.tag),
+        }
+        return {**default_vars, **self.variables}
+
+    @property
+    def template(self):
+        env = Environment(
+            loader=FileSystemLoader("templates"),
+            autoescape=select_autoescape()
+        )
+        template = env.get_template(f"{self.config}.json.j2")
+        return template.render(**self.context)
+
+    def log(self, data: t.AnyStr):
+        with luigi.LocalTarget(path=f"{BUILD_DIR}/{self.name}.log", format=Nop).open("w") as log:
+            log.write(data)
+
+    def run(self):
+        with NamedTemporaryFile() as file:
+            file.write(self.template.encode())
+            file.flush()
+
+            try:
+                result = subprocess.run(
+                    ["packer", "build", file.name],
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+                )
+
+                self.log(result.stdout)
+
+                with self.output().open("w") as output:
+                    json.dump(self.context, output)
+            except subprocess.CalledProcessError as e:
+                self.log(e.stdout)
+                raise
+
+
+class TagImage(PackerTask):
+    MARKER = "tags"
+
+    tags = luigi.ListParameter()
+
+    def requires(self):
+        return {
+            'image': BuildImage(
+                repository=self.repository,
+                tag=self.tag,
+                image=self.image,
+                config=self.config,
+                variables=self.variables
+            )
+        }
+
+    @property
+    def context(self) -> t.Dict[str, str]:
+        with self.input()['image'].open("r") as file:
+            return json.load(file)
+
+    @property
+    def source_image(self):
+        return f"{self.repository}:{self.tag}"
+
+    def run(self):
+        for tag in t.cast(list, self.tags):
+            target_image = f"{self.repository}:{tag}"
+            subprocess.run(
+                ["docker", "tag", self.source_image, target_image],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+            )
+
+        with self.output().open("w") as output:
+            json.dump({**self.context, "tags": self.tags}, output)
+
+
+class PushImage(TagImage):
+    MARKER = "push"
+
+    def requires(self):
+        return {
+            'image': TagImage(
+                repository=self.repository,
+                tag=self.tag,
+                image=self.image,
+                config=self.config,
+                variables=self.variables,
+                tags=self.tags
+            )
+        }
+
+    @property
+    def images(self):
+        names = [self.source_image]
+        names += [f"{self.repository}:{tag}" for tag in t.cast(list, self.tags)]
+        return names
+
+    def run(self):
+        for image in self.images:
+            subprocess.run(
+                ["docker", "push", image],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
+            )
+
+        with self.output().open("w") as output:
+            json.dump(self.context, output)
+
+
+class UbuntuBaseImage(luigi.Task):
+    ubuntu_release = luigi.Parameter()
+
+    @property
+    def image_name(self) -> str:
+        return "mjonuschat/baseimage"
+
+    @property
+    def image_tag(self) -> str:
+        return str(self.ubuntu_release)
+
+    def requires(self):
+        build_date = datetime.now().strftime("%Y%m%d")
+        tags = [f"{self.ubuntu_release}-{build_date}"]
+
+        if release_tag := UBUNTU_VERSIONS.get(str(self.ubuntu_release)):
+            tags.append(release_tag)
+
+        return {
+            'image': PushImage(
+                repository=self.image_name,
+                tag=self.image_tag,
+                image=f"ubuntu:{self.ubuntu_release}",
+                config="ubuntu-baseimage",
+                variables={},
+                tags=tags,
+            )
+        }
+
+    def output(self):
+        return self.input()['image']
+
+
+class RubyTask(luigi.Task):
+    ubuntu_release = luigi.Parameter()
+    ruby_version = luigi.Parameter()
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.image: t.Optional[luigi.Target] = None
+
+    @property
+    def image_name(self):
+        raise NotImplementedError("image_name method must be implemented")
+
+    @property
+    def image_tag(self) -> str:
+        return f"{self.ruby_version_full}-{self.ubuntu_release}"
+
+    @property
+    def ruby_version_full(self):
+        major, minor, patch, *_ = str(self.ruby_version).split(".")
+        return f"{major}.{minor}.{patch}"
+
+    @property
+    def ruby_version_short(self):
+        major, minor, *_ = self.ruby_version_full.split(".")
+        return f"{major}.{minor}"
+
+    @property
+    def ruby_version_id(self):
+        major, minor, *_ = self.ruby_version_full.split(".")
+        return f"{major}{minor}"
+
+    @property
+    def tags(self):
+        build_date = datetime.now().strftime("%Y%m%d")
+        tags = [
+            f"{self.ruby_version_full}-{self.ubuntu_release}-{build_date}",
+            f"{self.ruby_version_full}-{self.ubuntu_release}",
+            f"{self.ruby_version_short}-{self.ubuntu_release}",
+            f"{self.ubuntu_release}",
+        ]
+
+        if release_tag := UBUNTU_VERSIONS.get(str(self.ubuntu_release)):
+            tags.append(f"{self.ruby_version_full}-{release_tag}")
+            tags.append(f"{self.ruby_version_short}-{release_tag}")
+            tags.append(f"{release_tag}")
+
+        return tags
+
+
+class PassengerImage(RubyTask):
+    @property
+    def image_name(self) -> str:
+        return f"mjonuschat/passenger-ruby{self.ruby_version_id}"
+
+    def requires(self):
+        base_image = UbuntuBaseImage(ubuntu_release=self.ubuntu_release)
+        passenger_image = PushImage(
+            repository=self.image_name,
+            tag=self.image_tag,
+            image=f"{base_image.image_name}:{base_image.image_tag}",
+            config="passenger",
+            variables={
+                "ruby_version": self.ruby_version_full
+            },
+            tags=self.tags,
+        )
+
+        return {
+            'base': base_image,
+            'image': passenger_image,
+        }
+
+    def output(self) -> luigi.Target:
+        return self.input()['image']
+
+
+class RailsImage(RubyTask):
+    @property
+    def image_name(self):
+        return f"mjonuschat/rails-ruby{self.ruby_version_id}"
+
+    def requires(self):
+        base_image = PassengerImage(ubuntu_release=self.ubuntu_release, ruby_version=self.ruby_version)
+        rails_image = PushImage(
+            repository=self.image_name,
+            tag=self.image_tag,
+            image=f"{base_image.image_name}:{base_image.image_tag}",
+            config="rails",
+            variables={
+                "ruby_version": self.ruby_version_full
+            },
+            tags=self.tags,
+        )
+
+        return {
+            'base': base_image,
+            'image': rails_image,
+        }
+
+    def output(self) -> luigi.Target:
+        return self.input()['image']
+
+
+@click.command()
+@click.option('--recreate', is_flag=True, default=False, help="Recreate all images")
+def build_images(recreate: bool = False):
+    if recreate and BUILD_DIR.exists():
+        rmtree(BUILD_DIR, ignore_errors=False)
+
+    BUILD_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+    images = [UbuntuBaseImage(ubuntu_release=release) for release in UBUNTU_VERSIONS]
+    images += [
+        PassengerImage(ubuntu_release=ubuntu_release, ruby_version=ruby_version)
+        for (ubuntu_release, ruby_version) in itertools.product(UBUNTU_VERSIONS, RUBY_VERSIONS)
+    ]
+    images += [
+        RailsImage(ubuntu_release=ubuntu_release, ruby_version=ruby_version)
+        for (ubuntu_release, ruby_version) in itertools.product(UBUNTU_VERSIONS, RUBY_VERSIONS[-3:])
+    ]
+
+    luigi.build(images, local_scheduler=True, log_level='INFO')
+
+
+if __name__ == "__main__":
+    build_images()
