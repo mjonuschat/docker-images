@@ -38,7 +38,7 @@
         "container_passenger": {
           "node": {
             "enabled": true,
-            "version": "node_12.x"
+            "version": "{{ '{{ user `node_version`}}' }}"
           },
           "ruby": {
             "enabled": true,
@@ -64,6 +64,7 @@
     }
   ],
   "variables": {
-    "ruby_version": "{{ ruby_version }}"
+    "ruby_version": "{{ ruby_version }}",
+    "node_version": "{{ node_version }}"
   }
 }

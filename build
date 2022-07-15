@@ -30,6 +30,12 @@ RUBY_VERSIONS = [
     "3.1.2",
 ]
 
+NODEJS_VERSIONS = {
+    "bionic": "node_12.x",
+    "focal": "node_12.x",
+    "jammy": "node_16.x",
+}
+
 
 class PackerTask(luigi.Task):
     MARKER = "txt"
@@ -250,6 +256,10 @@ class PassengerImage(RubyTask):
     def image_name(self) -> str:
         return f"mjonuschat/passenger-ruby{self.ruby_version_id}"
 
+    @property
+    def node_version(self) -> str:
+        return NODEJS_VERSIONS.get(str(self.ubuntu_release), "node_12.x")
+
     def requires(self):
         base_image = UbuntuBaseImage(ubuntu_release=self.ubuntu_release)
         passenger_image = PushImage(
@@ -258,7 +268,8 @@ class PassengerImage(RubyTask):
             image=f"{base_image.image_name}:{base_image.image_tag}",
             config="passenger",
             variables={
-                "ruby_version": self.ruby_version_full
+                "ruby_version": self.ruby_version_full,
+                "node_version": self.node_version,
             },
             tags=self.tags,
         )
