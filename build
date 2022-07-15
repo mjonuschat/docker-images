@@ -20,7 +20,7 @@ UBUNTU_VERSIONS = {
     "bionic": "stable",
     "focal": "latest"
 }
-LATEST_UBUNTU_RELEASE = list(UBUNTU_VERSIONS.keys())[-1]
+APPLICATION_UBUNTU_RELEASE = "jammy"
 
 RUBY_VERSIONS = [
     "2.5.9",
@@ -360,7 +360,7 @@ def build_images(recreate: bool = False):
     ]
     images += [
         UbuntuApplicationImage(
-            ubuntu_release=LATEST_UBUNTU_RELEASE,
+            ubuntu_release=APPLICATION_UBUNTU_RELEASE,
             application=app
         )
         for app in ['opensmtpd', 'borgmatic']
